@@ -1,0 +1,41 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Digi-Memoria · Luma</title><link rel="stylesheet" href="../shared/base.css"><style>
+.levels{display:flex;gap:8px}.levels button.active{background:#244f3d;color:#fff;border-color:#244f3d}
+.grid{display:grid;gap:10px;background:#cfdcc5;padding:12px;border-radius:18px;border:1px solid #c6d4bb;max-width:760px;margin:auto}
+.memo{aspect-ratio:1;position:relative;perspective:600px;border:none;background:none;padding:0}
+.memo .in{position:absolute;inset:0;transition:transform .45s;transform-style:preserve-3d}
+.memo.open .in,.memo.done .in{transform:rotateY(180deg)}
+.memo .f,.memo .b{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;display:grid;place-items:center}
+.memo .f{background:linear-gradient(135deg,#244f3d,#3f7d5a);color:#d2e7ad;font-size:28px;border:2px solid #1a3a2c}
+.memo .b{background:#fff;transform:rotateY(180deg);border:3px solid var(--c);padding:8%}
+.memo .b img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.memo.done .b{box-shadow:0 0 0 3px #7b9e5c;opacity:.85}
+.memo.done{pointer-events:none}
+</style><body><main id="app">
+<div class="stats"><div><small>MOVIMIENTOS</small><b id="moves">0</b></div><div><small>PAREJAS</small><b><span id="pairs">0</span><i style="font-style:normal;font-size:15px;color:#9caa98"> / <span id="total">8</span></i></b></div><div><small>TIEMPO</small><b id="time">0:00</b></div><div><small>MEJOR</small><b id="best">—</b></div><div class="right levels"><button class="btn" data-n="6">Fácil</button><button class="btn active" data-n="8">Medio</button><button class="btn" data-n="12">Difícil</button><button id="again" class="btn primary">↻ Nueva</button></div></div>
+<div class="wrap"><div class="grid" id="grid"></div><div class="overlay" id="overlay" hidden><div><h2>✦ ¡Memoria digital!</h2><p id="ov-text"></p><button id="ov-again" class="btn primary">Jugar de nuevo</button></div></div></div>
+<footer><span><i></i>Encontrá las parejas de Digimon iguales</span><span>Sprites del DigiDex de Luma</span></footer>
+</main><script type="module">
+import {ALL_FILES,prettyName,sprite,header,sfx,shuffle,$,save,load,FAMILIES} from '../shared/digi.js';
+header($('app'),{kicker:'LUMA · DIGI ARCADE',title:'Digi-',em:'Memoria',help:'<p>Dá vuelta dos cartas por turno. Si son el mismo Digimon, quedan descubiertas.</p><p>Encontrá todas las parejas con la menor cantidad de movimientos posible.</p>'});
+const KEY='luma-memoria';let n=load(KEY+'-n',8),cards=[],open=[],moves=0,pairs=0,lock=false,sec=0,timer=null,started=false;
+const colorOf=file=>FAMILIES.find(f=>f.files.includes(file))?.color||'#639572';
+const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+function best(){const b=load(KEY+'-best-'+n,null);$('best').textContent=b?b+' mov.':'—';}
+function newGame(){
+ clearInterval(timer);sec=0;moves=0;pairs=0;open=[];lock=false;started=false;$('time').textContent='0:00';$('moves').textContent=0;$('pairs').textContent=0;$('total').textContent=n;$('overlay').hidden=true;best();
+ document.querySelectorAll('.levels [data-n]').forEach(b=>b.classList.toggle('active',+b.dataset.n===n));
+ const files=shuffle(ALL_FILES).slice(0,n);cards=shuffle([...files,...files]).map((file,i)=>({file,i,open:false,done:false}));
+ const g=$('grid');g.style.gridTemplateColumns=`repeat(${n===6?4:n===8?4:6},1fr)`;
+ g.replaceChildren(...cards.map(c=>{const b=document.createElement('button');b.className='memo';b.style.setProperty('--c',colorOf(c.file));b.setAttribute('aria-label','Carta '+(c.i+1));b.innerHTML=`<div class="in"><div class="f">✦</div><div class="b"><img src="${sprite(c.file)}" alt="${prettyName(c.file)}"></div></div>`;b.onclick=()=>flip(c,b);c.el=b;return b;}));
+}
+function flip(c,b){
+ if(lock||c.open||c.done)return;if(!started){started=true;timer=setInterval(()=>{sec++;$('time').textContent=fmt(sec);},1000);}
+ c.open=true;b.classList.add('open');open.push(c);sfx.tick();
+ if(open.length===2){moves++;$('moves').textContent=moves;const [a,d]=open;
+  if(a.file===d.file){a.done=d.done=true;a.el.classList.add('done');d.el.classList.add('done');open=[];pairs++;$('pairs').textContent=pairs;sfx.ok();
+   if(pairs===n){clearInterval(timer);const b=load(KEY+'-best-'+n,null);if(!b||moves<b)save(KEY+'-best-'+n,moves);best();$('ov-text').textContent=`${n} parejas en ${moves} movimientos y ${fmt(sec)}.`;$('overlay').hidden=false;sfx.win();}}
+  else{lock=true;setTimeout(()=>{a.open=d.open=false;a.el.classList.remove('open');d.el.classList.remove('open');open=[];lock=false;},800);}}
+}
+document.querySelectorAll('.levels [data-n]').forEach(b=>b.onclick=()=>{n=+b.dataset.n;save(KEY+'-n',n);newGame();});
+$('again').onclick=$('ov-again').onclick=newGame;newGame();
+</script></body></html>

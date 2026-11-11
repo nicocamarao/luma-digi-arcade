@@ -1,0 +1,52 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Digi-Snake · Luma</title><link rel="stylesheet" href="../shared/base.css"><style>
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:18px;align-items:start}
+.line{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin:8px 0}.line img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:3px solid #d9e3d4;background:#fff;opacity:.45}.line img.now{opacity:1;border-color:var(--c);transform:scale(1.15)}.line span{color:#9caa98}
+.dpad{display:none;grid-template-columns:repeat(3,56px);gap:6px;justify-content:center;margin-top:10px}.dpad button{height:56px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:20px}
+@media (pointer:coarse){.dpad{display:grid}}
+@media (max-width:820px){.layout{grid-template-columns:1fr}}
+</style><body><main id="app">
+<section id="setup" class="panel"><small>ELEGÍ TU DIGIMON</small><h2>Comé DigiHuevos y evolucioná</h2><div id="pick" class="picker"></div><button id="start" class="btn primary">▶ Jugar</button></section>
+<section id="game" hidden><div class="layout"><div class="wrap"><canvas id="c" class="game" width="720" height="540"></canvas><div class="overlay" id="overlay" hidden><div><h2 id="ov-title"></h2><p id="ov-text"></p><button id="again" class="btn primary">Jugar de nuevo</button> <button id="menu" class="btn">Cambiar Digimon</button></div></div></div>
+<aside class="card"><div class="stats" style="margin:0 0 8px;padding:10px 12px;gap:16px"><div><small>PUNTOS</small><b id="score">0</b></div><div><small>MEJOR</small><b id="best">0</b></div></div><small>LÍNEA EVOLUTIVA</small><div class="line" id="line"></div><p style="font-size:12px;color:#5a6c5c;line-height:1.5">Cada 3 DigiHuevos tu Digimon evoluciona y va más rápido. No choques con los bordes ni con tu propia cola.</p><div class="message" id="message"></div></aside></div>
+<div class="dpad"><span></span><button data-k="ArrowUp">▲</button><span></span><button data-k="ArrowLeft">◀</button><button data-k="ArrowDown">▼</button><button data-k="ArrowRight">▶</button></div>
+<footer><span><i></i>Movete con las flechas o <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> · <span class="kbd">Espacio</span> pausa</span></footer></section>
+</main><script type="module">
+import {FAMILIES,sprite,stageSprite,familyPicker,header,sfx,rand,pick,$,save,load,preload,imageSync,drawSticker} from '../shared/digi.js';
+header($('app'),{kicker:'LUMA · DIGI ARCADE',title:'Digi-',em:'Snake',help:'<p>Guiá a tu Digimon por la cuadrícula con las flechas.</p><p>Cada DigiHuevo (un Digimon bebé) que comés alarga tu cola y suma puntos. Cada 3, ¡digievolucionás!</p><p>Perdés si chocás con el borde o con tu propia cola.</p>'});
+const KEY='luma-snake',CS=36,COLS=20,ROWS=15,cv=$('c'),ctx=cv.getContext('2d');
+const EGGS=['botamon','punimon','nyokimon','pabumon','yuramon','pichimon','poyomon','snowbotamon','chibomon','pururumon','tsubumon','leafmon','jyarimon','zerimon','relemon'];
+let family=load(KEY+'-family',0),best=load(KEY+'-best',0),st=null,timer=null;$('best').textContent=best;
+familyPicker($('pick'),{selected:family,onPick:v=>{family=v;save(KEY+'-family',v);}});
+const dirs={ArrowUp:[0,-1],KeyW:[0,-1],ArrowDown:[0,1],KeyS:[0,1],ArrowLeft:[-1,0],KeyA:[-1,0],ArrowRight:[1,0],KeyD:[1,0]};
+function placeEgg(){let p;do{p={x:rand(COLS),y:rand(ROWS)};}while(st.snake.some(s=>s.x===p.x&&s.y===p.y));p.file=pick(EGGS);st.egg=p;}
+function newGame(){
+ preload([...FAMILIES[family].files.map((_,s)=>stageSprite(family,s)),...EGGS.map(sprite)]);
+ st={snake:[{x:5,y:7},{x:4,y:7},{x:3,y:7}],dir:[1,0],next:[1,0],eaten:0,score:0,stage:1,over:false,paused:false,speed:170};placeEgg();
+ $('setup').hidden=true;$('game').hidden=false;$('overlay').hidden=true;$('score').textContent=0;$('message').textContent='¡A comer DigiHuevos!';renderLine();schedule();draw();
+}
+function renderLine(){const f=FAMILIES[family];$('line').style.setProperty('--c',f.color);$('line').innerHTML=f.files.map((_,s)=>`<img src="${stageSprite(family,s)}" class="${s===st.stage?'now':''}" title="${f.line[s]}" alt="${f.line[s]}">`).join('<span>›</span>');}
+function schedule(){clearInterval(timer);timer=setInterval(tick,st.speed);}
+function tick(){
+ if(st.over||st.paused)return;st.dir=st.next;const h=st.snake[0],n={x:h.x+st.dir[0],y:h.y+st.dir[1]};
+ if(n.x<0||n.y<0||n.x>=COLS||n.y>=ROWS||st.snake.some((s,i)=>i<st.snake.length-1&&s.x===n.x&&s.y===n.y)){return end();}
+ st.snake.unshift(n);
+ if(n.x===st.egg.x&&n.y===st.egg.y){st.eaten++;st.score+=10*st.stage;$('score').textContent=st.score;sfx.ok();placeEgg();const max=FAMILIES[family].line.length-1;
+  if(st.eaten%3===0&&st.stage<max){st.stage++;st.speed=Math.max(80,st.speed-22);schedule();renderLine();sfx.win();$('message').textContent='¡Digievolución! '+FAMILIES[family].line[st.stage];}
+  else if(st.stage===max&&st.eaten%3===0){st.speed=Math.max(70,st.speed-8);schedule();}}
+ else st.snake.pop();
+ draw();
+}
+function end(){st.over=true;clearInterval(timer);sfx.bad();if(st.score>best){best=st.score;save(KEY+'-best',best);$('best').textContent=best;}$('ov-title').textContent='Fin del juego';$('ov-text').textContent=`${st.score} puntos · ${st.eaten} DigiHuevos · llegaste a ${FAMILIES[family].line[st.stage]}`;$('overlay').hidden=false;draw();}
+function draw(){
+ ctx.clearRect(0,0,cv.width,cv.height);for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){ctx.fillStyle=(x+y)%2?'#d4e4c8':'#dbe9cf';ctx.fillRect(x*CS,y*CS,CS,CS);}
+ const f=FAMILIES[family];st.snake.forEach((s,i)=>{if(i===0)return;const k=1-i/(st.snake.length+4);ctx.fillStyle=f.color;ctx.globalAlpha=.45+k*.5;ctx.beginPath();ctx.arc(s.x*CS+CS/2,s.y*CS+CS/2,CS/2-4-(1-k)*4,0,7);ctx.fill();ctx.globalAlpha=1;});
+ const e=st.egg,eimg=imageSync(sprite(e.file));drawSticker(ctx,eimg,e.x*CS+3,e.y*CS+3,CS-6,{border:'#fff',lineWidth:3});
+ const h=st.snake[0],himg=imageSync(stageSprite(family,st.stage)),hs=CS+8;drawSticker(ctx,himg,h.x*CS+CS/2-hs/2,h.y*CS+CS/2-hs/2,hs,{border:f.color,lineWidth:4,flip:st.dir[0]<0});
+ if(st.paused){ctx.fillStyle='#1e3a2a99';ctx.fillRect(0,0,cv.width,cv.height);ctx.fillStyle='#fff';ctx.font='800 40px Outfit';ctx.textAlign='center';ctx.fillText('PAUSA',cv.width/2,cv.height/2);}
+}
+function turn(code){const d=dirs[code];if(!d||!st||st.over)return;if(d[0]===-st.dir[0]&&d[1]===-st.dir[1])return;st.next=d;}
+document.addEventListener('keydown',e=>{if(!st)return;if(dirs[e.code]){e.preventDefault();turn(e.code);}if(e.code==='Space'&&!st.over){e.preventDefault();st.paused=!st.paused;draw();}});
+document.querySelectorAll('.dpad button').forEach(b=>b.onpointerdown=e=>{e.preventDefault();turn(b.dataset.k);});
+let sx=0,sy=0;cv.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;});cv.addEventListener('pointerup',e=>{const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)<20&&Math.abs(dy)<20)return;turn(Math.abs(dx)>Math.abs(dy)?(dx>0?'ArrowRight':'ArrowLeft'):(dy>0?'ArrowDown':'ArrowUp'));});
+$('start').onclick=newGame;$('again').onclick=newGame;$('menu').onclick=()=>{clearInterval(timer);$('game').hidden=true;$('setup').hidden=false;};
+</script></body></html>

@@ -1,0 +1,17 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salta y Fusiona · Luma</title><link rel="stylesheet" href="../shared/base.css"><style>
+.hud{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;margin-bottom:12px}
+.tray{display:flex;gap:6px;background:#fff9;border:1px solid #dce4d7;border-radius:15px;padding:8px 10px;min-height:66px;align-items:center;flex-wrap:wrap}
+.tray .slot{width:48px;height:48px;border-radius:50%;border:2px dashed #c6d4bb;display:grid;place-items:center;position:relative}
+.tray .slot img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid var(--c);background:#fff}
+.tray .slot.new img{animation:pop .4s}
+.tray .slot i{position:absolute;right:-4px;bottom:-4px;background:#244f3d;color:#fff;font:700 10px/1 Outfit;border-radius:50%;width:18px;height:18px;display:grid;place-items:center;font-style:normal}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.2)}}
+.scores{display:flex;gap:20px}.scores div{display:flex;flex-direction:column}.scores b{font:600 22px Outfit}
+#setup .picker{margin:12px 0}
+</style><body><main id="app">
+<section id="setup" class="panel"><small>ELEGÍ TU COMPAÑERO</small><h2>¿Con quién saltás hoy?</h2><div id="pick" class="picker"></div><button id="start" class="btn primary">▶ ¡A saltar!</button></section>
+<section id="game" hidden><div class="hud"><div class="tray" id="tray"></div><div class="scores"><div><small>FUSIONES</small><b id="score">0</b></div><div><small>DISTANCIA</small><b id="dist">0 m</b></div><div><small>MEJOR</small><b id="best">0</b></div></div></div>
+<div class="wrap"><canvas id="c" class="game" width="960" height="540"></canvas><div class="overlay" id="overlay" hidden><div><h2 id="ov-title"></h2><p id="ov-text"></p><button id="again" class="btn primary">Jugar de nuevo</button></div></div></div>
+<div class="touch"><button data-k="ArrowLeft">◀</button><button data-k="ArrowUp">▲ Saltar</button><button data-k="ArrowRight">▶</button></div>
+<footer><span><i></i>Movete con <span class="kbd">←</span><span class="kbd">→</span> o <span class="kbd">A</span><span class="kbd">D</span> · Saltá con <span class="kbd">Espacio</span> o <span class="kbd">↑</span></span><span>Dos amigos iguales se fusionan · Llegá a un Mega para ganar</span></footer></section>
+</main><script type="module" src="game.js"></script></body></html>

@@ -1,0 +1,52 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Luma · Digi Arcade</title><meta name="description" content="Nueve juegos de Digimon con los sprites del DigiDex de Luma."><link rel="stylesheet" href="shared/base.css"><style>
+body{background:radial-gradient(circle at 20% 10%,#dfeedd,#c9dcc8 40%,#9fbfa9);min-height:100vh}
+.desk{max-width:1160px;margin:auto;padding:28px 30px 90px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;gap:12px;flex-wrap:wrap}
+.top p{margin:4px 0 0;color:#3f5a4a;font-size:14px}
+.clock{font:600 14px Outfit;color:#244f3d;background:#fff8;border:1px solid #d6dfd2;border-radius:10px;padding:8px 12px}
+.icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}
+.deskicon{position:relative;background:#fffb;border:1px solid #dce4d7;border-radius:22px;padding:18px 14px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;transition:.18s;box-shadow:0 6px 18px #2b45331a;text-decoration:none;color:inherit}
+.deskicon:hover{transform:translateY(-4px);background:#fff;box-shadow:0 14px 30px #2b453326}
+.deskicon .ic{width:72px;height:72px;border-radius:22px;display:grid;place-items:center;font-size:34px;color:#fff;background:var(--c);position:relative;transform:rotate(-5deg);box-shadow:0 6px 14px color-mix(in srgb,var(--c) 50%,transparent)}
+.deskicon .ic img{position:absolute;right:-12px;bottom:-10px;width:40px;height:40px;border-radius:50%;object-fit:cover;border:3px solid #fff;background:#fff;transform:rotate(5deg)}
+.deskicon strong{font:600 15px Outfit}.deskicon small{font-size:10px;letter-spacing:1px;line-height:1.4}
+.deskicon .new{position:absolute;left:12px;top:10px;background:#e26d5a;color:#fff;font-size:9px;letter-spacing:1px;padding:3px 7px;border-radius:20px}
+.win{position:fixed;inset:0;display:none;flex-direction:column;background:#f2f5ef;z-index:50}
+.win.open{display:flex}
+.winbar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#244f3d;color:#e9f3dd;font:600 14px Outfit}
+.winbar .dots{display:flex;gap:6px}.winbar .dots i{width:12px;height:12px;border-radius:50%;display:block}
+.winbar button{border:1px solid #ffffff44;background:#ffffff22;color:#fff;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600}.winbar .sp{flex:1}
+.win iframe{flex:1;border:none;width:100%;background:#f2f5ef}
+.dock{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:8px;padding:8px 12px;background:#244f3dcc;backdrop-filter:blur(8px);border-radius:18px;z-index:40}
+.dock button{width:42px;height:42px;border-radius:12px;border:none;background:var(--c);color:#fff;font-size:18px;display:grid;place-items:center}
+.dock button:hover{transform:translateY(-4px) scale(1.1)}
+.hintbar{text-align:center;color:#3f5a4a;font-size:12px;margin-top:22px}
+</style><body>
+<div class="desk"><div class="top"><div class="brand"><span class="brand-icon">✦</span><div><small>LUMA · ESCRITORIO</small><h1>Digi <em>Arcade</em></h1><p>Nueve juegos con los sprites del DigiDex de Luma · Adventure 01, 02 y Tamers</p></div></div><div class="clock" id="clock"></div></div>
+<div class="icons" id="icons"></div>
+<p class="hintbar">Tocá un icono para abrir el juego en una ventana · Tu progreso se guarda en este dispositivo</p></div>
+<div class="win" id="win"><div class="winbar"><span class="dots"><i style="background:#e26d5a"></i><i style="background:#f2c14e"></i><i style="background:#58c997"></i></span><span id="wintitle"></span><span class="sp"></span><a id="winopen" class="winbar-link" target="_blank" rel="noopener"><button type="button">Abrir en pestaña ↗</button></a><button id="winclose">Cerrar ×</button></div><iframe id="frame" title="Juego" allow="autoplay"></iframe></div>
+<nav class="dock" id="dock"></nav>
+<script type="module">
+const GAMES=[
+ {id:'fusion',title:'Cuadricula Fusión',sub:'FUSIONÁ Y EVOLUCIONÁ',icon:'✦',c:'#244f3d',img:'wargreymon'},
+ {id:'ludo',title:'Digi-Ludo',sub:'2 JUGADORES · DADOS',icon:'⚄',c:'#e9a14b',img:'agumon',isNew:true},
+ {id:'salta',title:'Salta y Fusiona',sub:'PLATAFORMAS',icon:'⤴',c:'#6aabe0',img:'patamon',isNew:true},
+ {id:'lucha',title:'Digi-Lucha',sub:'2 JUGADORES · TECLADO',icon:'⚔',c:'#e26d5a',img:'greymon',isNew:true},
+ {id:'tateti',title:'Tateti 4×4',sub:'3 EN LÍNEA',icon:'✕',c:'#a695d5',img:'tailmon',isNew:true},
+ {id:'aventura',title:'Aventura Digital',sub:'ELEGÍ TU NIÑO ELEGIDO',icon:'🧭',c:'#58c997',img:'children/tai',isNew:true},
+ {id:'memoria',title:'Digi-Memoria',sub:'PAREJAS',icon:'▣',c:'#c48175',img:'gomamon',isNew:true},
+ {id:'quien',title:'¿Quién es ese Digimon?',sub:'ADIVINÁ LA SILUETA',icon:'?',c:'#f2c14e',img:'veemon',isNew:true},
+ {id:'snake',title:'Digi-Snake',sub:'COMÉ Y EVOLUCIONÁ',icon:'∿',c:'#89b974',img:'wormmon',isNew:true}
+];
+const icons=document.getElementById('icons'),dock=document.getElementById('dock'),win=document.getElementById('win'),frame=document.getElementById('frame');
+const mobile=matchMedia('(max-width:700px)').matches;
+function open(g){if(mobile){location.href=g.id+'/index.html';return;}document.getElementById('wintitle').textContent=g.title;document.getElementById('winopen').href=g.id+'/index.html';frame.src=g.id+'/index.html';win.classList.add('open');history.replaceState(null,'','#'+g.id);setTimeout(()=>{try{frame.contentWindow.focus();}catch{}},300);}
+function close(){win.classList.remove('open');frame.src='about:blank';history.replaceState(null,'',location.pathname);}
+for(const g of GAMES){const a=document.createElement('a');a.href=g.id+'/index.html';a.className='deskicon';a.style.setProperty('--c',g.c);a.innerHTML=`${g.isNew?'<span class="new">NUEVO</span>':''}<span class="ic">${g.icon}<img src="digidex/${g.img}.jpg" alt=""></span><strong>${g.title}</strong><small>${g.sub}</small>`;a.onclick=e=>{e.preventDefault();open(g);};icons.append(a);
+ const b=document.createElement('button');b.style.setProperty('--c',g.c);b.title=g.title;b.textContent=g.icon;b.onclick=()=>open(g);dock.append(b);}
+document.getElementById('winclose').onclick=close;
+window.addEventListener('message',e=>{if(e.data==='luma-back')close();});
+const tick=()=>document.getElementById('clock').textContent=new Date().toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'})+' · '+new Date().toLocaleDateString('es-UY',{weekday:'long',day:'numeric',month:'long'});tick();setInterval(tick,30000);
+const h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);if(g)open(g);
+</script></body></html>

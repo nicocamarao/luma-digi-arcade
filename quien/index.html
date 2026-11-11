@@ -1,0 +1,40 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>¿Quién es ese Digimon? · Luma</title><link rel="stylesheet" href="../shared/base.css"><style>
+.quiz{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:center}
+.shadow{position:relative;aspect-ratio:1;max-width:420px;margin:auto;border-radius:30px;background:radial-gradient(circle at 50% 40%,#fff7d6,#f2c14e 70%,#e9a14b);display:grid;place-items:center;overflow:hidden;border:4px solid #fff;box-shadow:0 20px 50px #35403a22}
+.shadow img,.shadow canvas{width:70%;height:70%;object-fit:cover;border-radius:50%;position:relative}
+.shadow img{display:none;background:#fff;border:4px solid #fff;animation:pop .4s}
+.shadow.reveal img{display:block}.shadow.reveal canvas{display:none}
+@keyframes pop{from{transform:scale(.6)}}
+.shadow .rays{position:absolute;inset:-50%;background:repeating-conic-gradient(#ffffff33 0 10deg,transparent 10deg 20deg);animation:rot 30s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.options{display:grid;gap:10px}.options button{padding:16px 18px;border-radius:14px;border:1px solid var(--line);background:#fff;font:600 17px Outfit;text-align:left;display:flex;align-items:center;gap:10px}
+.options button:hover:not(:disabled){background:#f8faf3;transform:translateX(3px)}
+.options button.ok{background:#d3e8bf;border-color:#7b9e5c}.options button.bad{background:#f7d3cc;border-color:#e26d5a}
+.options button i{font-style:normal;width:28px;height:28px;border-radius:50%;background:#eef2ea;display:grid;place-items:center;font-size:12px;color:#5a6c5c}
+.answer{font:700 26px Outfit;min-height:34px;text-align:center;margin-top:10px;color:#244f3d}
+@media (max-width:760px){.quiz{grid-template-columns:1fr}}
+</style><body><main id="app">
+<div class="stats"><div><small>RONDA</small><b><span id="round">1</span><i style="font-style:normal;font-size:15px;color:#9caa98"> / 10</i></b></div><div><small>ACIERTOS</small><b id="score">0</b></div><div><small>RACHA</small><b id="streak">0</b></div><div><small>RÉCORD</small><b id="best">0</b></div><div class="right"><button id="again" class="btn primary">↻ Nueva partida</button></div></div>
+<div class="wrap"><div class="quiz"><div><div class="shadow" id="shadow"><div class="rays"></div><canvas id="sil" width="400" height="400" aria-label="Silueta de un Digimon"></canvas><img id="img" alt=""></div><div class="answer" id="answer">¿Quién es ese Digimon?</div></div><div class="options" id="options"></div></div><div class="overlay" id="overlay" hidden><div><h2 id="ov-title"></h2><p id="ov-text"></p><button id="ov-again" class="btn primary">Jugar de nuevo</button></div></div></div>
+<footer><span><i></i>Tocá la opción correcta o usá las teclas <span class="kbd">1</span>–<span class="kbd">4</span></span><span>97 Digimon del DigiDex de Luma</span></footer>
+</main><script type="module">
+import {ALL_FILES,prettyName,sprite,header,sfx,shuffle,pick,$,save,load,preload,loadImage} from '../shared/digi.js';
+header($('app'),{kicker:'LUMA · DIGI ARCADE',title:'¿Quién es ese',em:'Digimon?',help:'<p>Aparece la silueta de un Digimon y cuatro nombres.</p><p>Elegí el correcto antes de que se revele. Son 10 rondas; sumá aciertos y rachas.</p>'});
+const KEY='luma-quien-best';let round=0,score=0,streak=0,current=null,locked=false,best=load(KEY,0);$('best').textContent=best;
+function next(){
+ if(round>=10){$('ov-title').textContent=score>=9?'🏆 ¡Maestro Digimon!':score>=6?'✦ ¡Muy bien!':'Seguí entrenando';$('ov-text').textContent=`Acertaste ${score} de 10.`;if(score>best){best=score;save(KEY,best);$('best').textContent=best;}$('overlay').hidden=false;return;}
+ round++;$('round').textContent=round;locked=false;$('answer').textContent='¿Quién es ese Digimon?';
+ const opts=shuffle(ALL_FILES).slice(0,4);current=pick(opts);$('shadow').classList.remove('reveal');$('img').src=sprite(current);silhouette(current);preload(opts.map(sprite));
+ $('options').replaceChildren(...opts.map((f,i)=>{const b=document.createElement('button');b.innerHTML=`<i>${i+1}</i>${prettyName(f)}`;b.onclick=()=>answer(f,b);return b;}));
+}
+function silhouette(file){const c=$('sil'),x=c.getContext('2d');x.clearRect(0,0,400,400);loadImage(sprite(file)).then(img=>{if(!img||file!==current)return;x.drawImage(img,0,0,400,400);try{const d=x.getImageData(0,0,400,400),p=d.data;for(let i=0;i<p.length;i+=4){if(p[i]>228&&p[i+1]>228&&p[i+2]>228)p[i+3]=0;else{p[i]=30;p[i+1]=42;p[i+2]=36;}}x.putImageData(d,0,0);}catch{x.filter='brightness(0)';x.drawImage(img,0,0,400,400);}});}
+function answer(f,b){
+ if(locked)return;locked=true;$('shadow').classList.add('reveal');const ok=f===current;
+ document.querySelectorAll('#options button').forEach(x=>{x.disabled=true;if(x.textContent.slice(1)===prettyName(current))x.classList.add('ok');});
+ if(ok){score++;streak++;$('answer').textContent='¡Es '+prettyName(current)+'!';sfx.win();}else{streak=0;b.classList.add('bad');$('answer').textContent='Era '+prettyName(current)+'.';sfx.bad();}
+ $('score').textContent=score;$('streak').textContent=streak;setTimeout(next,1400);
+}
+function restart(){round=0;score=0;streak=0;$('score').textContent=0;$('streak').textContent=0;$('overlay').hidden=true;next();}
+document.addEventListener('keydown',e=>{const k=+e.key;if(k>=1&&k<=4){const b=document.querySelectorAll('#options button')[k-1];b?.click();}});
+$('again').onclick=$('ov-again').onclick=restart;restart();
+</script></body></html>

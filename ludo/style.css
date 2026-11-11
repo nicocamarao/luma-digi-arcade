@@ -1,0 +1,27 @@
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0}
+.cpu{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:10px}
+.who{flex-direction:row!important;align-items:center;gap:10px!important}.who img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:3px solid var(--c,#fff);background:#fff}.who b{font-size:16px!important}
+.who.active{outline:3px solid var(--c);outline-offset:6px;border-radius:12px}
+.ludo-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:22px}
+.board-wrap{position:relative}
+.ludo{display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);aspect-ratio:1;gap:1px;background:#c6d4bb;border:3px solid #a9bb9b;border-radius:14px;overflow:hidden;width:100%;max-width:680px;margin:auto}
+.sq{position:relative;background:#f8faf3;min-width:0}
+.sq.base1{background:color-mix(in srgb,var(--c1) 30%,#fff)}.sq.base2{background:color-mix(in srgb,var(--c2) 30%,#fff)}
+.sq.home1{background:color-mix(in srgb,var(--c1) 55%,#fff)}.sq.home2{background:color-mix(in srgb,var(--c2) 55%,#fff)}
+.sq.start1{background:var(--c1)}.sq.start2{background:var(--c2)}
+.sq.safe::before{content:'★';position:absolute;inset:0;display:grid;place-items:center;color:#b8c7ad;font-size:14px}
+.sq.center{background:linear-gradient(135deg,var(--c1) 50%,var(--c2) 50%)}
+.sq.nest{display:grid;place-items:center}.sq.nest::after{content:'';width:70%;height:70%;border-radius:50%;background:#fff9;border:2px dashed #c6d4bb}
+.sq.movable{box-shadow:inset 0 0 0 3px #dc963d;cursor:pointer;animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:inset 0 0 0 5px #f5c56a}}
+.tok{position:absolute;border-radius:50%;object-fit:cover;background:#fff;border:2px solid var(--c);box-shadow:0 2px 5px #0003;transition:left .3s,top .3s;pointer-events:none;z-index:2}
+.tok.movable{pointer-events:auto;cursor:pointer;filter:drop-shadow(0 0 4px #dc963d)}
+.tok.p1{--c:var(--c1)}.tok.p2{--c:var(--c2)}
+.tok.goal{opacity:.9}
+.dice{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:16px;background:#fff;border:3px solid #244f3d;font:700 30px Outfit;box-shadow:0 8px 20px #0003;z-index:5}
+.dice.rolling{animation:spin .4s}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+#lines{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+#lines div{display:flex;gap:4px;align-items:center}#lines img{width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid var(--c);background:#fff}#lines span{color:#9caa98;font-size:11px}
+.rules{font-size:12px;color:#5a6c5c;line-height:1.5}
+@media (max-width:820px){.ludo-layout,.teams{grid-template-columns:1fr}}
